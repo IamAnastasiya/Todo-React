@@ -1,4 +1,0 @@
-{
-  "/todosData/:completed": "/todosData?completed=:completed",
-  "/todosData/:id": "/todosData?id=:id",
-}

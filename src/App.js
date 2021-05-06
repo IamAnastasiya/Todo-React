@@ -41,15 +41,17 @@ export default function App() {
             body: JSON.stringify({id: Math.random(), text: newTodo, completed: false})
         })
         const data = await response.json();
-            const updatedTodos = [...todos]
-            updatedTodos.push(data);
-            setTodos(updatedTodos)
+        const updatedTodos = [...todos]
+        updatedTodos.push(data);
+        setTodos(updatedTodos)
+        if (!response.ok) {
+            throw new Error(error.status);
+        }
     }
 
     async function deleteTodo (id) {
         await fetch(`http://localhost:3000/todosData/${id}`, {
             method: 'DELETE',
-            // headers: {'Content-Type': 'application/json'},
         })
         setTodos ((todos) => todos.filter(todo => {
             return todo.id !== Number(id)
@@ -110,35 +112,39 @@ export default function App() {
         }
     })
 
-
-        //     !!!! 404 (not found) - http://localhost:3000/todosData?completed=true
-    async function  deleteCompleted ()  {
-        await fetch(`http://localhost:3000/todosData?completed=true`,{
-            method: 'DELETE',
-        })
+    const deleteCompleted = () =>  {
+        let taskToDelete = []
         let nonCompletedTasks = todos.filter(todo => {
+            if (todo.completed) {
+                taskToDelete.push(todo.id)
+            }
             return !todo.completed
         })
         setTodos(nonCompletedTasks);
+        taskToDelete.map (async (id) => {
+            await fetch(`http://localhost:3000/todosData/${id}`,{
+                method: 'DELETE',
+            })
+        })
     }
 
-    //     !!!! 404 (not found)
-    async function toggleAllTodos ()  {
-        const response = await fetch("http://localhost:3000/todosData", {
-            method: 'PUT',
-            headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
-            body: JSON.stringify({completed: true})
+    const toggleAllTodos = () => {
+        let allToggled = todos.every(todo => todo.completed);
+        todos.map  (async (todo) => {
+            await fetch(`http://localhost:3000/todosData/${todo.id}`, {
+                method: 'PATCH',
+                headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+                body: JSON.stringify({completed: !allToggled})
+            })
         })
-        if (response.ok) {
-            let allToggled = todos.every(todo => todo.completed);
-            setTodos(
-                todos.map(todo => ({
-                        ...todo,
-                        completed: !allToggled
-                    })
-                ))
-        }
+        setTodos(
+            todos.map( (todo) => ({
+                    ...todo,
+                    completed: !allToggled
+                })
+            ))
     }
+
 
     if (error) {
         return <div>Ошибка: {error.message}</div>;
